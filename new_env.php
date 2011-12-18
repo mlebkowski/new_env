@@ -24,11 +24,6 @@ if (($domain[0] == '-')) help();
 
 list ($name) = explode('.', $domain);
 
-if (strpos($domain, '.') <= 0) $domain .= $conf['temp_domain'];
-$temp_domain = $name . $conf['temp_domain'];
-$is_temp = $temp_domain == $domain;
-
-
 $keys = array_keys($options);
 $keys_str = implode("", $keys) . strtoupper(implode("", $keys));
 
@@ -48,8 +43,13 @@ foreach (getopt('012n:g:') as $p => $value)
 foreach (getopt($keys_str) as $p => $value) 
   $settings[strtolower($p)] = ($p == strtolower($p));
 
+
 // 12 alphanum characters
 $name = substr(preg_replace('/[^a-z0-9-]/', '', $name), 0, 12);
+
+if (strpos($domain, '.') <= 0) $domain .= $conf['temp_domain'];
+$temp_domain = $name . $conf['temp_domain'];
+$is_temp = $temp_domain == $domain;
 
 // random alphanum password, various length
 $pass = get_random_pass(12);
@@ -173,6 +173,8 @@ if (!empty($settings['v'])):
     print_progress('Restarting apache', 2);
 
     // restart apache
+    $bin_apachectl = $conf['bin_apachectl'];
+    exec_("$bin_apachectl graceful");
   endif;
 
 
