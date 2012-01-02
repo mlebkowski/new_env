@@ -98,7 +98,7 @@ if (!empty($settings['v'])):
     chgrp($path, $conf['group_apache']);
 
 
-    $dir_conf = load('directory');
+    $dir_conf = load('directory', true);
     $apache_config = build_block('Directory', $path, $dir_conf);
     
     if ($special): foreach ($conf['env_types'] as $env):
@@ -110,7 +110,7 @@ if (!empty($settings['v'])):
       $serverName = $domain;
       $dev_htpasswd = $conf['dev_htpasswd'];
 
-      $vhost_conf = load('vhost');
+      $vhost_conf = load('vhost', true);
       $apache_config .= build_block('VirtualHost', $vhost_ip, $vhost_conf);
     
       if (!empty($settings['c'])) if ($env == 'prod'):
@@ -123,7 +123,7 @@ if (!empty($settings['v'])):
         $progress[] = Array ("SSL env", "https://$serverName");
 
         
-        $vhost_ssl = load('vhost');
+        $vhost_ssl = load('vhost', true);
         $apache_config .= build_block('VirtualHost', $ssl_ip, $vhost_ssl);
       endif;      
 
@@ -150,6 +150,7 @@ if (!empty($settings['v'])):
     endforeach;  else:
       mkdir("$path/logs", 0750);
       mkdir("$path/htdocs", 0750);
+      mkdir("$path/tmp", 0770);
       
       $serverName = $domain;
       $envpath = $path;
@@ -157,7 +158,7 @@ if (!empty($settings['v'])):
       $logs_path = "$path/logs/";
       $vhost_ip = $conf['vhost_ip'] . ':80';
       
-      $vhost_conf = load('vhost');
+      $vhost_conf = load('vhost', true);
       $apache_config = build_block('VirtualHost', $vhost_ip, $vhost_conf);
       
       // tu powinna byc grupa "apache" (do odczytu) oraz user "name" (do zapisu)
@@ -211,10 +212,20 @@ if (!empty($settings['f'])):
   
   print_progress("Adding permissions", 2);
   chown($path, $name);
-  chown("$path/htdocs", $name);
+  
+  if (is_dir("$path/htdocs")):
+    chown("$path/htdocs", $name);
+    chgrp("$path/htdocs", $conf['group_apache']);
+  endif;
+  
+  if (is_dir("$path/logs")):
+    chgrp("$path/logs", $conf['group_apache']);
+  endif;
 
-  chgrp("$path/htdocs", $conf['group_apache']);
-  chgrp("$path/logs", $conf['group_apache']);
+  if (is_dir("$path/tmp")):
+    chown("$path/tmp", $name);
+    chgrp("$path/tmp", $conf['group_apache']);
+  endif;
   
   print_progress("Setting password", 2);
   exec_(vsprintf('echo %s:%s | chpasswd',
@@ -394,11 +405,14 @@ function format_block_data($data, $level = 1) {
   return $block;
 }
 
-function load($__cfg) {
+function load($__cfg, $__override = false) {
   extract ($GLOBALS, EXTR_SKIP); // fix
   $__data = include dirname(__FILE__) . '/' . $__cfg . '.php';
-  if (file_exists($path = '/etc/new_env/' . $__cfg . '.php'))
-    $__data = array_merge($__data, include $path);
+  if (file_exists($path = '/etc/new_env/' . $__cfg . '.php')):
+    $__data = $__override 
+      ? (include $path)
+      : array_merge_recursive($__data, include $path);
+  endif;
   return $__data;
 }
 

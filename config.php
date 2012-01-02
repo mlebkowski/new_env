@@ -34,6 +34,7 @@
       'htdocs' => 'r',
       'data' => 'rw',
       'cache' => 'rw',
+      'tmp' => 'rw',
     ),
 
     'svn_path' => '/home/svn/',

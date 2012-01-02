@@ -7,6 +7,8 @@ return Array (
   'Require' => $prod ? null :'valid-user',
   'SetEnv Env' => $env,
   'SetEnv Debug' => $dev ? 1 : null,
+  'SetEnv DB_PASS' => $sql_pass,
+  'SetEnv TMP' => "$envpath/tmp",
     
   null,
     
@@ -20,7 +22,10 @@ return Array (
   'CustomLog' => $logs_path . "$domain-$env-access_log combined",
     
   null,
-                        
+  
+  'php_value open_basedir' => $envpath,
+  'php_value session.save_path' => "$envpath/tmp",
+  'php_value upload_tmp_dir' => "$envpath/tmp",
   'php_value error_reporting' => $prod ? E_ALL ^ E_NOTICE : E_ALL,
   'php_flag display_errors' => $dev ? 'on' : 'off',
   'php_flag log_errors' => $dev ? 'off' : 'on', 
