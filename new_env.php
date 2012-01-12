@@ -109,6 +109,7 @@ if (!empty($settings['v'])):
       $logs_path = $conf['logs_path'];
       $serverName = $domain;
       $dev_htpasswd = $conf['dev_htpasswd'];
+      $fastcgi = $conf['fastcgi'];
 
       $vhost_conf = load('vhost', true);
       $apache_config .= build_block('VirtualHost', $vhost_ip, $vhost_conf);
@@ -157,6 +158,7 @@ if (!empty($settings['v'])):
       $env = 'prod';
       $logs_path = "$path/logs/";
       $vhost_ip = $conf['vhost_ip'] . ':80';
+      $fastcgi = $conf['fastcgi'];
       
       $vhost_conf = load('vhost', true);
       $apache_config = build_block('VirtualHost', $vhost_ip, $vhost_conf);
@@ -242,39 +244,41 @@ if (!empty($settings['m'])):
  
   print_progress("Creating MySQL database");
   
-  $PDO = null;
+  $PDO = null; $i = 0;
   do {
+    $i++;
     $mysqlPass = read_password("   Enter MySQL root password: ");
     try {
       $PDO = new PDO('mysql:host=localhost', $conf['mysql_user'], $mysqlPass);
     } catch (Exception $E) { print_error($E->getMessage()); }
-  } while ($PDO == null);
+  } while (($PDO == null) && ($i <= 3));
   
-  $stmt = $PDO->query("USE $name;");
-  if ($stmt):
+  if ($PDO): 
+    $stmt = $PDO->query("USE $name;");
+    if ($stmt):
 //    print_error(print_r($PDO->errorInfo(),1));
-    print_error("Database '$name' already exists! Skipping...");
-  else:
+      print_error("Database '$name' already exists! Skipping...");
+    else:
   
-    $progress[] = Array ('MySQL host', 'localhost');
-    $progress[] = Array ('MySQL user', $name);
-    $progress[] = Array ('MySQL password', $sql_pass);
+      $progress[] = Array ('MySQL host', 'localhost');
+      $progress[] = Array ('MySQL user', $name);
+      $progress[] = Array ('MySQL password', $sql_pass);
     
-    $databases = Array ($name);
-    if ($special) $databases[] = $name . "_PRE";
+      $databases = Array ($name);
+      if ($special) $databases[] = $name . "_PRE";
 
-    $progress[] = Array ('MySQL databases', implode(', ', $databases));
-    $progress[] = null;
+      $progress[] = Array ('MySQL databases', implode(', ', $databases));
+      $progress[] = null;
     
-    foreach ($databases as $dbname):
-      print_progress("Granting access on $dbname to $name@localhost...", 2);
-      $PDO->exec(sprintf('CREATE DATABASE %s;', $dbname));
-      $PDO->exec(sprintf(
-        'GRANT ALL PRIVILEGES on %s.* to %s@localhost IDENTIFIED BY %s',
-        $dbname, $name, $PDO->quote($sql_pass)
-      ));
-    endforeach;
-    
+      foreach ($databases as $dbname):
+        print_progress("Granting access on $dbname to $name@localhost...", 2);
+        $PDO->exec(sprintf('CREATE DATABASE %s;', $dbname));
+        $PDO->exec(sprintf(
+          'GRANT ALL PRIVILEGES on %s.* to %s@localhost IDENTIFIED BY %s',
+          $dbname, $name, $PDO->quote($sql_pass)
+        ));
+      endforeach;
+    endif;
   endif;
   
 endif;
@@ -334,6 +338,8 @@ if (sizeof($progress)):
     if ($value) print_table_row($value[0], $value[1]);
     else echo "\n";
   }
+  if ($path) file_put_contents("$path/README",
+    implode(null, array_map('_ftr', $progress)));
 
   echo str_repeat("-", 80) . "\n";
 
@@ -429,7 +435,13 @@ function print_table_row($txt, $value, $color = null) {
   
   $value = "\x1B[${color}m$value\x1B[0m";
   
-  printf("%-31s : %s \n", $txt, $value);
+  echo format_table_row($txt, $value);
+}
+function format_table_row($txt, $value) {
+  return sprintf("%-31s : %s\n", $txt, $value);
+}
+function _ftr($a) {
+  return $a ? format_table_row($a[0], $a[1]) : "\n";
 }
 function print_error($txt) {
   if (is_array($txt)) $txt = print_r($txt, true);

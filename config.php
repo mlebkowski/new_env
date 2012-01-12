@@ -1,5 +1,7 @@
 <?php
   return Array (
+    'fastcgi' => true,
+
     'vhost_path' => '/var/www/serwisy/',
     'vhost_ip' => '*',
     

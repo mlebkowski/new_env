@@ -22,13 +22,18 @@ return Array (
   'CustomLog' => $logs_path . "$domain-$env-access_log combined",
     
   null,
-  
-  'php_admin_value open_basedir' => $envpath,
-  'php_value session.save_path' => "$envpath/tmp",
-  'php_value upload_tmp_dir' => "$envpath/tmp",
-  'php_value error_reporting' => $prod ? E_ALL ^ E_NOTICE : E_ALL,
-  'php_flag display_errors' => $dev ? 'on' : 'off',
-  'php_flag log_errors' => $dev ? 'off' : 'on', 
+
+  $fastcgi ? Array (
+    'ScriptAlias' => "/cgi-bin/ $envpath/htdocs/",
+    'FastCgiExternalServer' => "$envpath/htdocs/php-fastcgi -socket /var/run/fastcgi/fastcgi.socket",
+  ) : Array (
+    'php_admin_value open_basedir' => $envpath,
+    'php_value session.save_path' => "$envpath/tmp",
+    'php_value upload_tmp_dir' => "$envpath/tmp",
+    'php_value error_reporting' => $prod ? E_ALL ^ E_NOTICE : E_ALL,
+    'php_flag display_errors' => $dev ? 'on' : 'off',
+    'php_flag log_errors' => $dev ? 'off' : 'on', 
+  ),
 
   null,
 
