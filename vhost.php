@@ -23,7 +23,7 @@ return Array (
     
   null,
   
-  'php_value open_basedir' => $envpath,
+  'php_admin_value open_basedir' => $envpath,
   'php_value session.save_path' => "$envpath/tmp",
   'php_value upload_tmp_dir' => "$envpath/tmp",
   'php_value error_reporting' => $prod ? E_ALL ^ E_NOTICE : E_ALL,

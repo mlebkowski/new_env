@@ -16,6 +16,8 @@
     'group_apache' => 'www',
     'user_apache' => 'apache',
     
+    'mysql_user' => 'root',
+    
     'bin_apachectl' => '/usr/sbin/apache2ctl',
     'bin_htpasswd' => '/usr/bin/htpasswd',
     'bin_svnadmin' => '/usr/bin/svnadmin',

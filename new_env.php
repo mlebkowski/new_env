@@ -170,6 +170,7 @@ if (!empty($settings['v'])):
     
     $config_path = $conf['config_path'] . sprintf($conf['config_format'], $name);
     file_put_contents($config_path, $apache_config);
+    // TODO: dev+rw dla pliku conf.
 
     print_progress('Restarting apache', 2);
 
@@ -245,7 +246,7 @@ if (!empty($settings['m'])):
   do {
     $mysqlPass = read_password("   Enter MySQL root password: ");
     try {
-      $PDO = new PDO('mysql:host=localhost', 'root', $mysqlPass);
+      $PDO = new PDO('mysql:host=localhost', $conf['mysql_user'], $mysqlPass);
     } catch (Exception $E) { print_error($E->getMessage()); }
   } while ($PDO == null);
   
@@ -411,7 +412,7 @@ function load($__cfg, $__override = false) {
   if (file_exists($path = '/etc/new_env/' . $__cfg . '.php')):
     $__data = $__override 
       ? (include $path)
-      : array_merge_recursive($__data, include $path);
+      : array_merge($__data, include $path);
   endif;
   return $__data;
 }
