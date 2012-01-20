@@ -4,7 +4,7 @@ $dev = $env == 'dev';
 $prod = $env == 'prod';
 
 return Array (
-  'Require' => $prod ? null :'valid-user',
+//  'Require' => $prod ? null :'valid-user',
   'SetEnv Env' => $env,
   'SetEnv Debug' => $dev ? 1 : null,
   'SetEnv DB_PASS' => $sql_pass,
@@ -14,7 +14,9 @@ return Array (
     
   'DocumentRoot' => "$envpath/htdocs",
   'ServerName' => $prod ? $serverName : "$env.$temp_domain",
-  'ServerAlias' => ($prod && empty($cert))? implode(' ', Array ($temp_domain, "www.$domain")) : null,
+  'ServerAlias' => ($prod && empty($cert))? implode(' ',
+     Array ('prod.'.$temp_domain, $temp_domain, "www.$domain"))
+     : null,
       
   null,
                 
@@ -25,7 +27,7 @@ return Array (
 
   $fastcgi ? Array (
     'ScriptAlias' => "/cgi-bin/ $envpath/htdocs/",
-    'FastCgiExternalServer' => "$envpath/htdocs/php-fastcgi -socket /var/run/fastcgi/fastcgi.socket",
+    'FastCgiExternalServer' => $cert ? null : "$envpath/htdocs/php-fastcgi -socket /var/run/fastcgi/fastcgi.socket",
   ) : Array (
     'php_admin_value open_basedir' => $envpath,
     'php_value session.save_path' => "$envpath/tmp",

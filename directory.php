@@ -5,4 +5,5 @@ return Array (
   'AuthType' => 'basic',
   'AuthName' => 'dev',
   'AuthUserFile' => $conf['dev_htpasswd'],
+  'Require' => 'valid-user',
 );

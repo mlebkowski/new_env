@@ -99,7 +99,7 @@ if (!empty($settings['v'])):
 
 
     $dir_conf = load('directory', true);
-    $apache_config = build_block('Directory', $path, $dir_conf);
+    $apache_config = build_block('DirectoryMatch', $path . '/(dev|staging)', $dir_conf, true);
     
     if ($special): foreach ($conf['env_types'] as $env):
       $progress[] = Array ("Env $env", "http://$env.$temp_domain");
@@ -246,10 +246,18 @@ if (!empty($settings['m'])):
   
   $PDO = null; $i = 0;
   do {
+    if ($i > 0):
+      $mysqlUser = readline("   Enter MySQL user name: ");
+    else: 
+      $mysqlUser = $conf['mysql_user'];
+      echo "   Assuming MySQL user name: $mysqlUser\n";
+    endif;
+    $mysqlPass = read_password("   Enter MySQL password: ");
+
     $i++;
-    $mysqlPass = read_password("   Enter MySQL root password: ");
+
     try {
-      $PDO = new PDO('mysql:host=localhost', $conf['mysql_user'], $mysqlPass);
+      $PDO = new PDO('mysql:host=localhost', $mysqlUser, $mysqlPass);
     } catch (Exception $E) { print_error($E->getMessage()); }
   } while (($PDO == null) && ($i <= 3));
   
