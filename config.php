@@ -29,12 +29,13 @@
     'temp_domain' => '.q2.newmedialabs.pl',
 
     'ssl_ip' => '127.0.0.1',
-    'cert_path' => '/etc/apache/cert/',
-    'cert_default' => 'goldbachinteractive.pl',
+    'cert_path' => '/etc/ssl/apache2/',
+    'cert_default' => 'gbi',
     
     
     'env_types' => Array ('dev', 'staging', 'prod'),
     'skel' => Array (
+      'cgi-bin' => 'r',
       'htdocs' => 'r',
       'data' => 'rw',
       'cache' => 'rw',

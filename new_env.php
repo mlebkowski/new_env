@@ -99,14 +99,17 @@ if (!empty($settings['v'])):
 
 
     $dir_conf = load('directory', true);
+// TODO
+// wylistowac wsystkie srodowiska innego typu niz prod
     $apache_config = build_block('DirectoryMatch', $path . '/(dev|staging)', $dir_conf, true);
     
-    if ($special): foreach ($conf['env_types'] as $env):
+    if ($special): foreach ($conf['env_types'] as $env => $env_type):
+      if (is_numeric($env)) $env = $env_type;
       $progress[] = Array ("Env $env", "http://$env.$temp_domain");
       
       $envpath = "$path/$env";
       $vhost_ip = $conf['vhost_ip'] . ':80';
-      $logs_path = $conf['logs_path'];
+      $logs_path = sprintf('%s/%s/', rtrim($conf['logs_path'], '/'), $domain);
       $serverName = $domain;
       $dev_htpasswd = $conf['dev_htpasswd'];
       $fastcgi = $conf['fastcgi'];
@@ -174,11 +177,19 @@ if (!empty($settings['v'])):
     file_put_contents($config_path, $apache_config);
     // TODO: dev+rw dla pliku conf.
 
+// apache wont start if he cannot open log files
+    mkdir($logs_path);
+
     print_progress('Restarting apache', 2);
 
     // restart apache
     $bin_apachectl = $conf['bin_apachectl'];
     exec_("$bin_apachectl graceful");
+
+// this should be enabled for fcgi
+//    exec_(sprintf("chgrp %s $logs_path/*", $conf['group_apache']));
+//    exec_("chmod g+w $logs_path/*error_log");
+
   endif;
 
 
@@ -194,10 +205,10 @@ if (!empty($settings['f'])):
   if (empty($path)):
     $path = $conf['vhost_path'] . $domain;
   // useradd will do this, but with what permissions?:
-  /*
+  
     print_progress("Home directory does not exist. Creating", 2);
     mkdir($path, 0750);
-  */
+  
   endif;
   
   $progress[] = Array ('FTP host', "ftp://$temp_domain");
